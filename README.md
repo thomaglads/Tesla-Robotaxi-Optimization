@@ -7,7 +7,7 @@
 
 > **A Next-Gen Dispatch System designed to optimize autonomous fleet profitability by predicting seasonal demand anomalies and weather-driven surges.**
 
-<img width="1897" height="1028" alt="image" src="https://github.com/user-attachments/assets/9cc9599f-0292-4448-ab39-cdf8a0551605" />
+<img width="1906" height="1023" alt="image" src="https://github.com/user-attachments/assets/d70b3d08-0ac0-40d9-be1c-fe74dfa0d31b" />
 https://tesla-robotaxi-optimization-jltm8e3o25yjo2xysij8fo.streamlit.app/
 
 ---
