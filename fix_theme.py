@@ -1,6 +1,6 @@
 import os
 
-# 1. CREATE THE CONFIG FILE (Forces Dark Mode & Tesla Red)
+# 1. ENSURE CONFIG IS PERFECT
 config_dir = ".streamlit"
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
@@ -8,149 +8,195 @@ if not os.path.exists(config_dir):
 config_content = """
 [theme]
 base = "dark"
-primaryColor = "#e82127"
-backgroundColor = "#000000"
-secondaryBackgroundColor = "#1c1c1c"
-textColor = "#ffffff"
+primaryColor = "#00A8E8"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#1F2937"
+textColor = "#FAFAFA"
 font = "sans serif"
 """
 
 with open(f"{config_dir}/config.toml", "w") as f:
     f.write(config_content)
-    print("✅ Configured Streamlit for Dark Mode.")
 
-# 2. WRITE THE APP FILE (Professional Fonts & Layout)
+# 2. WRITE THE "GOD TIER" APP
 app_code = r'''
 import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
+import pydeck as pdk
 
-# --- PAGE CONFIGURATION ---
+# --- PAGE CONFIG ---
 st.set_page_config(
-    page_title="Tesla Fleet Command",
-    page_icon="🚘",
+    page_title="CyberCab Operations Center",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- CSS STYLING (THE "PRO" LOOK) ---
+# --- CSS STYLING ---
 st.markdown("""
 <style>
-    /* 1. METRIC VALUES (The Big Numbers) */
+    /* METRICS */
     div[data-testid="stMetricValue"] {
-        font-size: 46px !important;
-        font-weight: 900 !important;
-        color: #FFFFFF !important;
-        text-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
-    }
-    
-    /* 2. METRIC LABELS (The Small Titles) */
-    div[data-testid="stMetricLabel"] {
-        font-size: 16px !important;
-        font-weight: 700 !important;
-        color: #e82127 !important; /* Tesla Red */
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* 3. METRIC CARDS (Background) */
-    div[data-testid="stMetric"] {
-        background-color: #111111;
-        border: 1px solid #333;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.5);
-    }
-
-    /* 4. HEADERS */
-    h1 {
+        font-size: 32px !important;
         font-weight: 800 !important;
-        color: #e82127 !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: #9CA3AF !important; 
         text-transform: uppercase;
     }
-    h3 {
-        color: #cccccc !important;
+    div[data-testid="stMetric"] {
+        background-color: #1F2937;
+        border: 1px solid #374151;
+        padding: 15px;
+        border-radius: 10px;
     }
+    /* HEADERS */
+    h1 { color: #FFFFFF !important; font-weight: 900 !important; letter-spacing: -1px; }
+    h2, h3 { color: #E5E7EB !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER ---
-col1, col2 = st.columns([1, 6])
-with col1:
-    # Tesla Logo Placeholder
-    st.markdown("## ⚡")
-with col2:
-    st.title("Tesla Fleet Command")
-    st.markdown("### 📡 Live Dispatch & Optimization System")
+# --- SIDEBAR CONTROLS ---
+st.sidebar.markdown("## 📡 CONTROL TOWER")
+st.sidebar.divider()
+
+# 1. Time Controls
+selected_day = st.sidebar.selectbox("📅 Operational Day", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+selected_hour = st.sidebar.slider("⏰ Time of Day (24h)", 0, 23, 18)
+
+# 2. Scenario Controls
+st.sidebar.markdown("### ⛈️ SCENARIO PLANNING")
+weather = st.sidebar.radio("Weather Condition", ["Clear", "Rain", "Snowstorm"], horizontal=True)
+surge_multiplier = st.sidebar.slider("⚡ Surge Pricing (x)", 1.0, 3.5, 1.5 if weather == "Clear" else 2.5)
+
+# --- LOGIC ENGINE ---
+def predict_metrics(day, hour, surge, weather_cond):
+    base_demand = 400
+    
+    # Time Logic
+    if day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]:
+        if 7 <= hour <= 10: base_demand += 300 # AM Rush
+        if 16 <= hour <= 19: base_demand += 450 # PM Rush
+    if day in ["Friday", "Saturday"] and hour >= 20: base_demand += 400 # Nightlife
+    
+    # Weather Logic
+    if weather_cond == "Rain": base_demand *= 1.3
+    if weather_cond == "Snowstorm": base_demand *= 0.8 # Fewer riders, but higher surge
+    
+    # Price Elasticity (Higher price = slightly lower demand)
+    elasticity = 1.0 - (surge * 0.1) 
+    final_demand = int(base_demand * elasticity)
+    
+    # Financials
+    gross_revenue = final_demand * (22 * surge)
+    op_cost = final_demand * 4.50 # Charging + Maintenance per ride
+    net_profit = gross_revenue - op_cost
+    
+    return final_demand, gross_revenue, net_profit
+
+# Calculate Current State
+demand, revenue, profit = predict_metrics(selected_day, selected_hour, surge_multiplier, weather)
+
+# --- MAIN DASHBOARD LAYOUT ---
+
+# Header
+c1, c2 = st.columns([1, 8])
+with c1: st.markdown("# ⚡")
+with c2: 
+    st.title("CYBERCAB OPERATIONS CENTER: NYC")
+    st.markdown("### 🤖 Autonomous Fleet Dispatch & Profit Optimization")
 
 st.divider()
 
-# --- SIDEBAR ---
-st.sidebar.markdown("### 🕹️ OPERATIONS CENTER")
-st.sidebar.divider()
-selected_day = st.sidebar.selectbox("📅 Select Day", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-selected_hour = st.sidebar.slider("⏰ Dispatch Hour", 0, 23, 17)
-surge_multiplier = st.sidebar.slider("⚡ Surge Multiplier", 1.0, 3.0, 1.5)
+# Top Level Metrics
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("📍 Active Requests", f"{demand}", f"{'+' if weather != 'Clear' else ''}{int(demand*0.05)} vs Forecast")
+m2.metric("💰 Gross Revenue (Hr)", f"${revenue:,.0f}", "Live Actuals")
+m3.metric("📉 Net Profit", f"${profit:,.0f}", f"{int((profit/revenue)*100)}% Margin")
+m4.metric("🔋 Fleet Utilization", f"{min(98, int(demand/8))} %", "Optimal")
 
-# --- LOGIC ---
-def predict_demand(day, hour, surge):
-    base = 400
-    if day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]:
-        if 7 <= hour <= 10: base += 300
-        if 16 <= hour <= 19: base += 450
-    if day in ["Friday", "Saturday"] and hour >= 20: base += 400
-    
-    final_demand = base * (1 / (surge * 0.8))
-    return int(final_demand + np.random.randint(-20, 20))
-
-trips = predict_demand(selected_day, selected_hour, surge_multiplier)
-revenue = trips * (25 * surge_multiplier)
-fleet_needed = int(trips * 1.1)
-
-# --- METRICS ROW ---
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.metric("📍 Predicted Demand", f"{trips}", f"{int(trips*0.12)} vs Avg")
-with c2:
-    st.metric("💰 Hourly Revenue", f"${revenue:,.0f}", "High Yield")
-with c3:
-    st.metric("🚖 Fleet Required", f"{fleet_needed}", "Active Units")
-
-# --- CHART AREA ---
+# --- ROW 2: MAP & CHARTS ---
 st.markdown("---")
-st.markdown(f"### 📉 24-Hour Demand Forecast: {selected_day}")
+col_map, col_chart = st.columns([5, 3])
 
-hours = list(range(24))
-demands = [predict_demand(selected_day, h, surge_multiplier) for h in hours]
-chart_data = pd.DataFrame({'Hour': hours, 'Demand': demands})
-
-# Tesla Red Area Chart
-chart = alt.Chart(chart_data).mark_area(
-    line={'color':'#e82127'},
-    color=alt.Gradient(
-        gradient='linear',
-        stops=[alt.GradientStop(color='#e82127', offset=0),
-               alt.GradientStop(color='rgba(232, 33, 39, 0.1)', offset=1)]
+with col_map:
+    st.markdown("### 🗺️ Live Demand Heatmap (Manhattan Sector)")
+    
+    # Generate Mock Geospatial Data centered on NYC
+    lat_center, lon_center = 40.758896, -73.985130 # Times Square
+    
+    # Create random points around NYC based on demand
+    df_map = pd.DataFrame(
+        np.random.randn(demand, 2) / [50, 50] + [lat_center, lon_center],
+        columns=['lat', 'lon']
     )
-).encode(
-    x=alt.X('Hour', title='Time of Day'),
-    y=alt.Y('Demand', title='Trip Count'),
-    tooltip=['Hour', 'Demand']
-).properties(height=400)
 
-st.altair_chart(chart, use_container_width=True)
+    # 3D Hexagon Layer
+    layer = pdk.Layer(
+        "HexagonLayer",
+        df_map,
+        get_position='[lon, lat]',
+        auto_highlight=True,
+        elevation_scale=50,
+        pickable=True,
+        elevation_range=[0, 3000],
+        extruded=True,
+        coverage=1,
+    )
 
-# --- STRATEGY ALERT ---
-if trips > 500:
-    st.error("🚨 HIGH DEMAND ALERT: Deploy Reserves from Queens Depot.")
-elif trips < 150:
-    st.info("🔋 CHARGING MODE: Route excess units to Supercharger Hubs.")
+    # Render Map
+    view_state = pdk.ViewState(
+        latitude=lat_center,
+        longitude=lon_center,
+        zoom=11,
+        pitch=50,
+    )
+    
+    st.pydeck_chart(pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip={"text": "Demand Cluster"},
+        map_style="mapbox://styles/mapbox/dark-v10" # Dark mode map
+    ))
+
+with col_chart:
+    st.markdown("### 📈 24h Trend")
+    hours = list(range(24))
+    # Generate trend line
+    trend_data = [predict_metrics(selected_day, h, surge_multiplier, weather)[0] for h in hours]
+    chart_df = pd.DataFrame({'Hour': hours, 'Demand': trend_data})
+    
+    # Green Profit Line
+    c = alt.Chart(chart_df).mark_area(
+        line={'color':'#10B981'},
+        color=alt.Gradient(
+            gradient='linear',
+            stops=[alt.GradientStop(color='#10B981', offset=0),
+                   alt.GradientStop(color='rgba(16, 185, 129, 0.1)', offset=1)]
+        )
+    ).encode(
+        x='Hour', 
+        y='Demand'
+    ).properties(height=350)
+    
+    st.altair_chart(c, use_container_width=True)
+
+# --- ALERT SYSTEM ---
+if weather == "Snowstorm":
+    st.warning("❄️ WINTER PROTOCOL: Maximize regenerative braking. Deploy AWD units only.")
+elif profit > 15000:
+    st.success("🚀 SURGE OPTIMIZED: Revenue target exceeded. Hold current pricing.")
 else:
-    st.success("✅ OPTIMAL STATE: Maintain patrol routes.")
+    st.info("📡 STANDARD OPS: Monitoring fleet distribution.")
 '''
 
+# Write the file
 with open("app.py", "w", encoding="utf-8") as f:
     f.write(app_code)
-    print("✅ App rebuilt with Professional Tesla Styles.")
+
+print("✅ SUCCESS: CyberCab Dashboard with 3D MAPS is ready!")
